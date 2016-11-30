@@ -30,7 +30,6 @@ shinyUI(
               }else{
                 to_select <- background_choices[[1]][2]
               }
-              
               selectInput(
                 inputId = paste(ui_names_bg[j], i, sep = ""),
                 label = paste(dropdown_names_bg[j], ":", sep = ""),
@@ -39,7 +38,6 @@ shinyUI(
                 multiple = TRUE
                 )
             }),
-            
             checkboxInput(
               inputId = paste("pop", i, sep = ""),
               label = "Visa namn"
