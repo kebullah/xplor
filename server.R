@@ -527,6 +527,10 @@ shinyServer(function(input, output, session) {
 
     # Create polygons
     observe({
+      create_polygons()
+    })
+
+    create_polygons <- function(){
       leafletProxy(mapId = "map") %>%
         clearGroup(group = "group1Polygons") %>%
         clearGroup(group = "group2Polygons")
@@ -558,7 +562,7 @@ shinyServer(function(input, output, session) {
             group = "group2Polygons"
           )
       }
-    })
+    }
 
     # Create color palette
     colorpal <- reactive({
