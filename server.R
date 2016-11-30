@@ -27,6 +27,12 @@ shinyServer(function(input, output, session) {
     }
     return(a)
   }
+  
+  #Run a check on the user input
+  observe({
+    handle_group_multiboxes(1)
+    handle_group_multiboxes(2)
+  })
 
   # Create static map
   output[["map"]] <- renderLeaflet({
@@ -116,10 +122,33 @@ shinyServer(function(input, output, session) {
           for (i in seq_along(input[[col]])) {
             # Get rows in spdf where value matches input selection
             spdf <- spdf[spdf[[df_col]] %in% input[[col]], ]
+
           }
         }
       }
       return(spdf)
+    }
+  
+    #Handle logical constraints on multi-select in group forms
+    handle_group_multiboxes <- function(group_number){
+      for (i in seq_along(ui_names_bg)) {
+        col <- paste(ui_names_bg[i], group_number, sep = "") # E.g. "area1"
+        local_input_length = length(input[[col]])
+        # "Alla" exits
+        if ("Alla" %in% input[[col]]) {
+          # "Alla" is first of many selections
+          if (input[[col]][1] == "Alla" && local_input_length > 1) {
+            #Remove alla (More specific exits)
+            index_all <- match("Alla", input[[col]])
+            updateSelectInput(session, col, selected = input[[col]][-index_all])
+          }
+          # "Alla" is a new entry
+          if (input[[col]][1] != "Alla" && local_input_length > 1) {
+            #Reset multiselect; user wants all selected
+            updateSelectInput(session, col, selected = "Alla")
+          }
+        }
+      }
     }
 
     # Subset background variables
