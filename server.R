@@ -30,40 +30,39 @@ shinyServer(function(input, output, session) {
 
   #Handle logical constraints on multi-select in group forms
   handle_group_multiboxes <- function(group_number){
-    obs$suspend()
     for (i in seq_along(ui_names_bg)) {
       col <- paste(ui_names_bg[i], group_number, sep = "") # E.g. "area1"
-      local_input_length = length(input[[col]])
       # "Alla" exits
       if ("Alla" %in% input[[col]]) {
         # "Alla" is first of many selections
-        if (input[[col]][1] == "Alla" && local_input_length > 1) {
+        if (input[[col]][1] == "Alla" && length(input[[col]]) > 1) {
           #Remove alla (More specific exits)
-          index_all <- match("Alla", input[[col]])
-          updateSelectInput(session, col, selected = input[[col]][-index_all])
+          updateSelectInput(session, col, selected = input[[col]][-1])
         }
         # "Alla" is a new entry
-        if (input[[col]][1] != "Alla" && local_input_length > 1) {
+        if (input[[col]][1] != "Alla" && length(input[[col]]) > 1) {
           #Reset multiselect; user wants all selected
           updateSelectInput(session, col, selected = "Alla")
         }
       }
     }
-    obs$resume()
   }
 
   # On UI update
   obs <- observe({
+    update_map()
+  })
+
+  update_map <- function(){
+    obs$suspend()
     handle_group_multiboxes(1)
     handle_group_multiboxes(2)
-    group_1_set <- group_1_filter_1()
-    group_2_set <- group_2_filter_1()
-
-    create_polygons(group_1_set, group_2_set)
+    create_polygons()
     add_map_color_legend()
     add_map_popups()
     add_map_markers()
-  })
+    obs$resume()
+  }
 
   # Create static map
   output[["map"]] <- renderLeaflet({
@@ -534,35 +533,35 @@ shinyServer(function(input, output, session) {
       return(TRUE)
     }
 
-    create_polygons <- function(filtered_set_1, filtered_set_2){
+    create_polygons <- function(){
       leafletProxy(mapId = "map") %>%
         clearGroup(group = "group1Polygons") %>%
         clearGroup(group = "group2Polygons")
       if (!is.null(null_checks_1())) {
         leafletProxy(mapId = "map") %>%
           addPolygons(
-            data = filtered_set_1,
+            data = group_1_filter_1(),
             fill = TRUE,
             fillColor = ~ colorpal()(group_1_mean()),
             fillOpacity = 0.8,
             stroke = TRUE,
             weight = 2,
             color = "red",
-            layerId = filtered_set_1[["Omrade"]],
+            layerId = group_1_filter_1()[["Omrade"]],
             group = "group1Polygons"
           )
       }
       if (!is.null(null_checks_2())) {
         leafletProxy(mapId = "map") %>%
           addPolygons(
-            data = filtered_set_2,
+            data = group_2_filter_1(),
             fill = TRUE,
             fillColor = ~ colorpal()(group_2_mean()),
             fillOpacity = 0.8,
             stroke = TRUE,
             weight = 2,
             color = "blue",
-            layerId = filtered_set_2[["Omrade"]],
+            layerId = group_2_filter_1()[["Omrade"]],
             group = "group2Polygons"
           )
       }
